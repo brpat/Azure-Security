@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "azure-security"
+version = "0.1.0"
+description = "Collection of python tools to audit Azure security"
+authors = ["Brijesh <brijpat199@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+azure-identity = "^1.17.1"
+python-dotenv = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
