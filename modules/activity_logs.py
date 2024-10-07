@@ -5,7 +5,7 @@ import os
 import json
 
 
-def return_activity_logs(resource_group):
+def return_activity_logs(resource_group, DEBUG=False) -> dict:
     try:
         mmc_client = MonitorManagementClient(
                                     DefaultAzureCredential(), 
@@ -31,16 +31,25 @@ def return_activity_logs(resource_group):
                     operation_name = log.operation_name.localized_value
                     time_stamp = log.event_timestamp
                     ip_addr = log.claims.get('ipaddr', 'None')
-                    print(f"Operation: {log.operation_name.localized_value}")
-                    print(f"Time: {time_stamp}")
-                    print(f"Status: {log.status.localized_value}")
-                    print(f"Resource: {log.resource_id}")
-                    print(f"CallerIP: {ip_addr}")
-                    print("-" * 40)
+                    if DEBUG:
+                        print(f"Operation: {log.operation_name.localized_value}")
+                        print(f"Time: {time_stamp}")
+                        print(f"Status: {log.status.localized_value}")
+                        print(f"Resource: {log.resource_id}")
+                        print(f"CallerIP: {ip_addr}")
+                        print("-" * 40)
+                    else:
+                        return {
+                            "caller": caller,
+                            "event": event,
+                            "operation_name": operation_name,
+                            "time_stamp": time_stamp,
+                            "caller_ip": ip_addr,
+                        }
 
                 except AttributeError as log_err:
                     print(f"Error processing log entry: {log_err}")
     except Exception as e:
         print(f"Error retrieving or processing activity logs: {e}")
 
-return_activity_logs("")
+return_activity_logs("python-project-test-resources")
