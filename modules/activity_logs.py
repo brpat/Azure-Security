@@ -1,8 +1,8 @@
+from datetime import datetime, timedelta
+from os import environ
+import json
 from azure.mgmt.monitor import MonitorManagementClient
 from azure.identity import DefaultAzureCredential
-from datetime import datetime, timedelta
-import os
-import json
 
 
 def get_activity_logs(resource_group, DEBUG=False, delta_days=7) -> dict:
@@ -29,7 +29,7 @@ def get_activity_logs(resource_group, DEBUG=False, delta_days=7) -> dict:
     try:
         mmc_client = MonitorManagementClient(
                                     DefaultAzureCredential(), 
-                                    os.environ['AZURE_SUBSCRIPTION_ID']
+                                    environ['AZURE_SUBSCRIPTION_ID']
                                     )
     except Exception as e:
         print(f"Failed to create MonitorManagementClient: {e}")
