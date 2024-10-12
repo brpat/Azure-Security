@@ -5,7 +5,27 @@ import os
 import json
 
 
-def return_activity_logs(resource_group, DEBUG=False) -> dict:
+def get_activity_logs(resource_group, DEBUG=False, delta_days=7) -> dict:
+    """
+    Retrieves and optionally prints activity logs for a given Azure resource group.
+
+    Args:
+        resource_group (str): The name of the Azure resource group to retrieve activity logs for.
+        DEBUG (bool, optional): If True, the function will print detailed logs to the console. 
+                                Defaults to False.
+        delta_days: Amount of days to search. Defaults to returning logs from the last 7 days.
+
+    Returns:
+        dict: A dictionary containing information about the log entry, including the caller,
+              event message, operation name, timestamp, and caller's IP address. Returns None if no logs are found or an error occurs.
+
+    Raises:
+        Exception: If the MonitorManagementClient cannot be created or if there's an issue retrieving or processing activity logs.
+
+    Notes:
+        This function retrieves logs for the past 30 days from the specified resource group and 
+        processes them. If DEBUG is set to True, it prints details about each log entry.
+    """
     try:
         mmc_client = MonitorManagementClient(
                                     DefaultAzureCredential(), 
@@ -17,7 +37,7 @@ def return_activity_logs(resource_group, DEBUG=False) -> dict:
 
     try:
         end_time = datetime.utcnow()
-        start_time = end_time - timedelta(days=2)
+        start_time = end_time - timedelta(days=30)
         filter = f"eventTimestamp ge '{start_time}' and eventTimestamp le '{end_time}' and resourceGroupName eq '{resource_group}'"
         
         activity_logs = mmc_client.activity_logs.list(filter=filter)
@@ -52,4 +72,7 @@ def return_activity_logs(resource_group, DEBUG=False) -> dict:
     except Exception as e:
         print(f"Error retrieving or processing activity logs: {e}")
 
-return_activity_logs("python-project-test-resources")
+
+def get_sign_in_logs():
+    pass
+
