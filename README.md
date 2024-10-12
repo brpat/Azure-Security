@@ -7,9 +7,9 @@ Collection of python tools to help audit Azure environments.
 
 In order to download all dependencies and run the project without any issues, download and setup Poetry following the documentation here: https://python-poetry.org/docs/#installation
 
-**Install Dependencies**
+**Clone Project and Install Dependencies**
 ```bash
-git clone git@github.com:brpat/file-sentry.git
+git clone git@github.com:brpat/Azure-Security.git
 
 poetry install
 ```
