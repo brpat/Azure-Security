@@ -10,7 +10,7 @@ python = "^3.10"
 azure-identity = "^1.17.1"
 python-dotenv = "^1.0.1"
 azure-mgmt-monitor = "^6.0.2"
-
+azure-mgmt-authorization = "^4.0.0"
 
 [build-system]
 requires = ["poetry-core"]
