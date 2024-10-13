@@ -9,6 +9,7 @@ https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/get?vi
 '''
 
 class AzureRoleAuditor:
+
     def __init__(self, subscription_id: str):
         self.subscription_id = subscription_id
         self.amc_client = self.setup_auth_client()
@@ -39,11 +40,13 @@ class AzureRoleAuditor:
                 role_name = self.role_id_to_name(role.role_definition_id.split("/")[-1])
                 created_on = role.created_on
                 updated_on = role.updated_on
-                principal_id = role.principal_id
+                principal_id = role.principal_id                
+                role_type = "PERMISSIVE_ROLE!" if (AzureRoleAuditor.search_for_builtin_privileged_roles(role_name)) else "STANDARD_ROLE"
 
                 print(f"id: {assignment_id}")
                 print(f"RoleName: {role_name}")
                 print(f"Scope: {scope}")
+                print(f"TYPE: {role_type}")
                 print(f"principal_id: {principal_id}")
                 print(f"Created_time: {created_on}")
                 print(f"Updated_time: {updated_on}")
@@ -61,13 +64,23 @@ class AzureRoleAuditor:
         role_object = self.amc_client.role_definitions.get(scope=f"/subscriptions/{self.subscription_id}", role_definition_id=role_definition_id )
         return role_object.role_name
 
+    @staticmethod
+    def search_for_builtin_privileged_roles(role_name: str) -> bool:
+        """Compares input Azure RBAC role to list of permissive built roles. 
+        Returns true if role matches one of permissive roles."""
+        
+        azure_permissive_roles: list[str] = [
+                        "Owner",
+                        "User Access Administrator",
+                        "Contributor",
+                        "Role Based Access Control Administrator",
+                        "User Access Administrator"
+                    ]
 
-    def search_for_dangerous_roles(self):
-        """Searches for potentially dangerous roles. This needs to be implemented."""
-        pass
-    
+        return role_name in azure_permissive_roles
+
 # Usage
-auditor = AzureRoleAuditor(subscription_id=environ['AZURE_SUBSCRIPTION_ID'])
-auditor.list_role_assignments()
-print(auditor.role_id_to_name("acdd72a7-3385-48ef-bd42-f606fba81ae7"))
+# auditor = AzureRoleAuditor(subscription_id=environ['AZURE_SUBSCRIPTION_ID'])
+# auditor.list_role_assignments()
+# print(auditor.role_id_to_name("acdd72a7-3385-48ef-bd42-f606fba81ae7"))
 # list_role_assignments(environ['AZURE_SUBSCRIPTION_ID'])
