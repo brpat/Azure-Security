@@ -14,6 +14,21 @@ git clone git@github.com:brpat/Azure-Security.git
 poetry install
 ```
 
+## Authentication
+For local development purposes use DefaultAzureCredential authentication with .env with Service Princpals. If using within CI/CD pipeline, ensure credentials are injected from build environment variables and not hardcoded.
+
+```bash
+cd Azure-Security
+touch .env
+```
+
+```bash
+AZURE_CLIENT_ID=EXAMPLECLIENTID
+AZURE_CLIENT_SECRET=EXAMPLEAPPSECRET
+AZURE_TENANT_ID=EXAMPLETENANTID
+```
+Reference: https://learn.microsoft.com/en-us/azure/developer/python/sdk/authentication/overview
+
 ## Usage
 
 *Interactive
