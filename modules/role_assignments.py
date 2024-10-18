@@ -35,6 +35,7 @@ class AzureRoleAuditor:
         try:
             roles = self.amc_client.role_assignments.list_for_subscription(filter='atScope()')
             for role in roles:
+                self.check_for_custom_privileged_role(role.role_definition_id)
                 assignment_id = role.id
                 scope = role.scope
                 role_name = self.role_id_to_name(role.role_definition_id.split("/")[-1])
@@ -63,6 +64,23 @@ class AzureRoleAuditor:
 
         role_object = self.amc_client.role_definitions.get(scope=f"/subscriptions/{self.subscription_id}", role_definition_id=role_definition_id )
         return role_object.role_name
+    
+    def check_for_custom_privileged_role(self, role_definition_id: str):
+        if not self.amc_client:
+            print("AuthorizationManagementClient is not initialized.")
+            return
+        
+        try:
+            role_definition = self.amc_client.role_definitions.get_by_id(role_definition_id)
+            print(role_definition)
+            if role_definition.role_type != 'BuiltInRole':
+                for permission in role_definition.permissions:
+                    print(permission)
+                    exit()
+            else: 
+                return
+        except Exception as e:
+            print(f"Error occurred: {e}")
 
     @staticmethod
     def search_for_builtin_privileged_roles(role_name: str) -> bool:
@@ -80,7 +98,7 @@ class AzureRoleAuditor:
         return role_name in azure_permissive_roles
 
 # Usage
-# auditor = AzureRoleAuditor(subscription_id=environ['AZURE_SUBSCRIPTION_ID'])
-# auditor.list_role_assignments()
+auditor = AzureRoleAuditor(subscription_id=environ['AZURE_SUBSCRIPTION_ID'])
+auditor.list_role_assignments()
 # print(auditor.role_id_to_name("acdd72a7-3385-48ef-bd42-f606fba81ae7"))
 # list_role_assignments(environ['AZURE_SUBSCRIPTION_ID'])
