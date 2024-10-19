@@ -6,5 +6,5 @@ import modules.activity_logs as activity_logs_client
 
 
 
-# logs = modules.activity_logs.get_activity_logs("python-project-test-resources")
+logs = activity_logs_client.get_activity_logs("python-project-test-resources", DEBUG=True)
 # print(logs)
