@@ -1,5 +1,5 @@
 # Azure-Security
-Collection of python tools to help audit Azure environments. 
+Collection of python tools to help audit Azure environments. Plus learning the Azure SDK
 
 
 
