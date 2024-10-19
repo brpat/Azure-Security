@@ -2,6 +2,7 @@ from os import environ
 from operator import itemgetter
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.authorization import AuthorizationManagementClient
+from azure.mgmt.authorization.v2022_04_01.models import Permission
 
 '''
 https://learn.microsoft.com/en-us/python/api/azure-mgmt-authorization/azure.mgmt.authorization.v2022_04_01.authorizationmanagementclient?view=azure-python
@@ -35,19 +36,20 @@ class AzureRoleAuditor:
         try:
             roles = self.amc_client.role_assignments.list_for_subscription(filter='atScope()')
             for role in roles:
-                self.check_for_custom_privileged_role(role.role_definition_id)
+                is_custom_role: dict = self.check_for_custom_privileged_role(role.role_definition_id)
                 assignment_id = role.id
                 scope = role.scope
                 role_name = self.role_id_to_name(role.role_definition_id.split("/")[-1])
                 created_on = role.created_on
                 updated_on = role.updated_on
                 principal_id = role.principal_id                
-                role_type = "PERMISSIVE_ROLE!" if (AzureRoleAuditor.search_for_builtin_privileged_roles(role_name)) else "STANDARD_ROLE"
+                is_permissive = "PERMISSIVE_ROLE!" if (AzureRoleAuditor.search_for_builtin_privileged_roles(role_name) 
+                                                       or is_custom_role.get("permissive")) else "STANDARD_ROLE"
 
                 print(f"id: {assignment_id}")
                 print(f"RoleName: {role_name}")
                 print(f"Scope: {scope}")
-                print(f"TYPE: {role_type}")
+                print(f"TYPE: {is_permissive}")
                 print(f"principal_id: {principal_id}")
                 print(f"Created_time: {created_on}")
                 print(f"Updated_time: {updated_on}")
@@ -65,22 +67,61 @@ class AzureRoleAuditor:
         role_object = self.amc_client.role_definitions.get(scope=f"/subscriptions/{self.subscription_id}", role_definition_id=role_definition_id )
         return role_object.role_name
     
-    def check_for_custom_privileged_role(self, role_definition_id: str):
+    def check_for_custom_privileged_role(self, role_definition_id: str) -> bool:
         if not self.amc_client:
             print("AuthorizationManagementClient is not initialized.")
             return
-        
+
         try:
+            overly_permissive_perms: list = list()
+            role_name = self.role_id_to_name(role_definition_id.split("/")[-1])
             role_definition = self.amc_client.role_definitions.get_by_id(role_definition_id)
-            print(role_definition)
+            # print(role_definition)
             if role_definition.role_type != 'BuiltInRole':
                 for permission in role_definition.permissions:
-                    print(permission)
-                    exit()
-            else: 
-                return
+                    overly_permissive_perms = self.__check_priviledged_permission(permission)
+
+                if overly_permissive_perms:
+                    print(f"Dangerous permissions detected in custom role {role_name}")
+                    print(f"Allow: {overly_permissive_perms}")
+                    return {
+                        "type": 'Custom',
+                        "permissive": True,
+                        "excessive_permissions": overly_permissive_perms
+                        }
+                else:
+                    return {
+                        "type": 'Custom',
+                        "permissive": False,
+                        "excessive_permissions": overly_permissive_perms
+                        }
+            else:
+                return {"type": 'BuiltInRole'}
         except Exception as e:
             print(f"Error occurred: {e}")
+
+    def __check_priviledged_permission(self, permissions_object: Permission) -> list:
+        permissive_perms = list()
+        
+        permissive_perms_lst = [
+            "*",
+            "Microsoft.Compute/*",
+            "Microsoft.Storage/*",
+            "Microsoft.Network/*",
+            "Microsoft.KeyVault/*",
+            "Microsoft.Resources/*",
+            "Microsoft.ContainerService/*",
+            "Microsoft.Sql/*",
+            "Microsoft.Security/*",
+            "Microsoft.Authorization/*",
+            "Microsoft.Automation/*"
+        ]
+
+        for allowed_action in permissions_object.actions:
+            if allowed_action in permissive_perms_lst:
+                permissive_perms.append(allowed_action)
+        if permissive_perms:
+            return permissive_perms
 
     @staticmethod
     def search_for_builtin_privileged_roles(role_name: str) -> bool:
